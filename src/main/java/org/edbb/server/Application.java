@@ -1,8 +1,11 @@
 package org.edbb.server;
 
 import org.edbb.data.DataStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.web.ErrorMvcAutoConfiguration;
@@ -19,8 +22,11 @@ import java.util.Arrays;
 @SpringBootApplication(exclude = {ErrorMvcAutoConfiguration.class})
 public class Application {
 
+    private static Logger logger = LoggerFactory.getLogger(Application.class);
+
     public static void main(String[] args) {
-        SpringApplication.run(BlackBoxEventControllerV1.class, args);
+
+        SpringApplication.run(Application.class, args);
     }
 
     @Bean
@@ -28,8 +34,9 @@ public class Application {
         return args -> {
             String[] beanNames = ctx.getBeanDefinitionNames();
             Arrays.sort(beanNames);
+
             for (String beanName : beanNames) {
-                System.out.println(beanName);
+                logger.info("@Bean -> {}", beanName);
             }
         };
     }

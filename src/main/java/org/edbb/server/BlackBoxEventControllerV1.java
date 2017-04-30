@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
  */
 
 @RestController
+@EnableAutoConfiguration(exclude = {ErrorMvcAutoConfiguration.class})
 @RequestMapping(value = BlackBoxEventControllerV1.BLACK_BOX_PATH_V1)
 public class BlackBoxEventControllerV1 {
 
@@ -29,13 +30,13 @@ public class BlackBoxEventControllerV1 {
     @RequestMapping(value = "/submit", method = RequestMethod.POST)
     public ResponseEntity<LocationReport> submitEvent(
             @RequestBody BoxEvent inputEvent) {
-        return new ResponseEntity<LocationReport>(new LocationReport(), HttpStatus.OK);
+        return new ResponseEntity<>(new LocationReport(), HttpStatus.OK);
     }
 
     @RequestMapping(value = "/location", method = RequestMethod.GET)
     public ResponseEntity<LocationReport> location(
             @RequestParam int id) {
-        return new ResponseEntity<LocationReport>(new LocationReport(), HttpStatus.OK);
+        return new ResponseEntity<>(new LocationReport(), HttpStatus.OK);
     }
 
 }

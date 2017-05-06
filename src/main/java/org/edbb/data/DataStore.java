@@ -1,15 +1,23 @@
 package org.edbb.data;
 
 /**
- * Database wrapper
+ * Database access layer
  */
-public class DataStore {
+public interface DataStore {
 
-    public DataStore() {
+    /**
+     * Load a given event from the data store
+     * @param id
+     * @return
+     */
+    BBEvent getEvent(long id);
 
-    }
+    /**
+     * Add a new event to the data store returning it's unique ID
+     * @param event
+     * @return
+     */
+    long addEvent(BBEvent event);
 
-    public void insertEvent(int location) {
 
-    }
 }

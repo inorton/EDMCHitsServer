@@ -20,7 +20,25 @@ public interface DataStore {
      * @param sysName
      * @return
      */
-    long lookupSystem(String sysName);
+    long lookupSystem(String sysName) throws NameNotFoundError;
+
+    /**
+     * Add a new system to the database
+     * @param sysName
+     * @param x
+     * @param y
+     * @param z
+     * @return
+     */
+    long addSystem(String sysName, double x, double y, double z);
+
+    /**
+     * Find the name of a system
+     * @param id
+     * @return
+     * @throws NameNotFoundError
+     */
+    String lookupSystem(long id) throws NameNotFoundError;
 
     /**
      * Load a given event from the data store

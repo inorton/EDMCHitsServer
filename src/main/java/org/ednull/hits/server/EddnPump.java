@@ -2,38 +2,59 @@ package org.ednull.hits.server;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.util.JSONPObject;
-import jdk.nashorn.internal.parser.JSONParser;
+import org.ednull.hits.data.IncidentScanner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.nio.channels.Selector;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.zip.DataFormatException;
-import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
 
 /**
  * Subscribe to zmq relay from EDDN
  */
-public class EddnPump {
+public class EddnPump extends Thread {
+
+    Logger logger = LoggerFactory.getLogger(EddnPump.class);
+
+    Thread pumpThread;
+    private boolean started = false;
 
     public static final String RELAY = "tcp://eddn-relay.elite-markets.net:9500";
-    public static final String SCHEMA_KEY = "$schemaRef";
-    public static final String SCHEMA_JOURNAL = "http://schemas.elite-markets.net/eddn/journal/1";
+    private final IncidentScanner scanner;
 
-    public void pump() {
+    @Autowired
+    public EddnPump(IncidentScanner scanner) {
+        this.scanner = scanner;
+    }
 
+    private long eventCount = 0;
+
+    @Override
+    public void run() {
+        pump();
+    }
+
+    private void summary() {
+        if (eventCount % 200 == 0)
+            logger.info(String.format("pumped %d events", eventCount));
+    }
+
+    public synchronized void pump() {
+        started = true;
         ZContext ctx = new ZContext();
         ZMQ.Socket client = ctx.createSocket(ZMQ.SUB);
         client.subscribe("".getBytes());
         client.setReceiveTimeOut(30000);
 
         client.connect(RELAY);
+        logger.info("EDDN Relay connected");
         ZMQ.Poller poller = ctx.createPoller(2);
         poller.register(client, ZMQ.Poller.POLLIN);
         byte[] output = new byte[256 * 1024];
@@ -58,12 +79,11 @@ public class EddnPump {
                                     });
 
                             if (!map.isEmpty()) {
-                                if (map.containsKey(SCHEMA_KEY)){
-                                    if (map.get(SCHEMA_KEY).equals(SCHEMA_JOURNAL)){
-                                        LinkedHashMap msg = (LinkedHashMap) map.getOrDefault("message", null);
-                                        if (msg != null){
-
-                                        }
+                                if (map.containsKey(IncidentScanner.SCHEMA_KEY)){
+                                    eventCount++;
+                                    summary();
+                                    if (scanner != null) {
+                                        scanner.input((LinkedHashMap) map);
                                     }
                                 }
                             }
@@ -79,6 +99,6 @@ public class EddnPump {
     }
 
     public static void main(String[] args){
-        new EddnPump().pump();
+        new EddnPump(null).pump();
     }
 }

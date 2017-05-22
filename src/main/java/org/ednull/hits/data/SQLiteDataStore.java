@@ -24,13 +24,13 @@ public class SQLiteDataStore implements DataStore {
     private void createTables() throws SQLException {
         try (Statement sth = connection.createStatement()) {
             String events = new StringBuilder()
-                    .append(String.format("CREATE TABLE IF NOT EXISTS %s ( ", EVENTS_TABLE))
+                    .append(String.format("CREATE TABLE IF NOT EXISTS %S ( ", EVENTS_TABLE))
                     .append(" id INTEGER PRIMARY KEY, ")
                     .append(" app INTEGER NOT NULL, ")
                     .append(" submitter TEXT, ")
                     .append(" starSystem INTEGER NOT NULL, ")
                     .append(" eventName TEXT NOT NULL, ")
-                    .append(" timeStamp INTEGER NOT NULL").toString();
+                    .append(" timeStamp INTEGER NOT NULL )").toString();
             sth.execute(events);
 
             createIndex(sth, EVENTS_TABLE, "events_system",
@@ -45,8 +45,18 @@ public class SQLiteDataStore implements DataStore {
                     new String[]{"eventName", "starSystem"}, false);
 
             createNameTable(sth, PILOTS_TABLE, true);
-            createNameTable(sth, SYSTEMS_TABLE, true);
             createNameTable(sth, APPS_TABLE, true);
+
+            String syscoords = new StringBuilder()
+                    .append(String.format("CREATE TABLE IF NOT EXISTS %S (", SYSTEMS_TABLE))
+                    .append(" id INTEGER PRIMARY KEY, ")
+                    .append(" name TEXT, ")
+                    .append(" x REAL, ")
+                    .append(" y REAL, ")
+                    .append(" z REAL )").toString();
+            sth.execute(syscoords);
+            createIndex(sth, SYSTEMS_TABLE, "systems_name",
+                    new String[]{"name"}, true);
         }
     }
 
@@ -112,7 +122,7 @@ public class SQLiteDataStore implements DataStore {
             sth.setLong(1, id);
             ResultSet resultSet = sth.executeQuery();
 
-            if (resultSet.first()) {
+            if (resultSet.next()) {
                 return resultSet.getString("name");
             }
         } catch (SQLException err ){
@@ -122,20 +132,23 @@ public class SQLiteDataStore implements DataStore {
         return name;
     }
 
-    private long lookupId(String name, String table) {
-        return lookupId(connection, name, table);
+    private long lookupId(String table, String name) {
+        return lookupId(connection, table, name);
     }
 
-    private long lookupId(Connection conn, String name, String table) {
+    private long lookupId(Connection conn, String table, String name) {
         long id = 0;
-        try (PreparedStatement sth = conn.prepareStatement(new StringBuilder()
-                .append(String.format("SELECT id FROM %s ", table))
-                .append("WHERE name = ?").toString())) {
+        StringBuilder sb = new StringBuilder()
+                .append(String.format("SELECT id FROM %S ", table))
+                .append("WHERE name == ?");
+        String query = sb.toString();
+
+        try (PreparedStatement sth = conn.prepareStatement(query)) {
             sth.clearParameters();
             sth.setString(1, name);
             ResultSet resultSet = sth.executeQuery();
 
-            if (resultSet.first()) {
+            if (resultSet.next()) {
                 return resultSet.getLong("id");
             }
         } catch (SQLException err ){
@@ -145,7 +158,7 @@ public class SQLiteDataStore implements DataStore {
     }
 
     private long getNameId(String table, String name) throws SQLException {
-        long exists = lookupId(name, table);
+        long exists = lookupId(table, name);
         if (exists > 0) {
             return exists;
         }
@@ -157,10 +170,11 @@ public class SQLiteDataStore implements DataStore {
         try (Connection writer = getWriteConnection()) {
             PreparedStatement sth = writer.prepareStatement(new StringBuilder()
                     .append(String.format("INSERT INTO %S ", table))
-                    .append("name ")
+                    .append("(name) ")
                     .append("VALUES ( ? ) ")
                     .toString());
             sth.setString(1, name);
+            sth.execute();
             writer.commit();
 
             // could use last "SELECT last_insert_rowid()" but this is simple
@@ -243,11 +257,47 @@ public class SQLiteDataStore implements DataStore {
     }
 
     @Override
-    public long lookupSystem(String sysName) {
-        try {
-            return getNameId(SYSTEMS_TABLE, sysName);
+    public long lookupSystem(String sysName) throws NameNotFoundError {
+        long exists = lookupId(SYSTEMS_TABLE, sysName);
+        if (exists > 0) {
+            return exists;
+        }
+        throw new NameNotFoundError(sysName);
+    }
+
+    @Override
+    public String lookupSystem(long id) throws NameNotFoundError {
+        String name = lookupName(id, SYSTEMS_TABLE);
+        if (name == null)
+            throw new NameNotFoundError(String.format("id=%d", id));
+        return name;
+    }
+
+    @Override
+    public long addSystem(String name, double x, double y, double z) {
+        try (Connection writer = getWriteConnection()) {
+            long exists = lookupId(writer, SYSTEMS_TABLE, name);
+            if (exists == 0) {
+                PreparedStatement sth = writer.prepareStatement(new StringBuilder()
+                        .append(String.format("INSERT INTO %S ", SYSTEMS_TABLE))
+                        .append("(name, x , y, z) ")
+                        .append("VALUES ( ?, ?, ?, ? ) ")
+                        .toString());
+                sth.setString(1, name);
+                sth.setDouble(2, x);
+                sth.setDouble(3, y);
+                sth.setDouble(4, z);
+                sth.execute();
+                writer.commit();
+
+                // could use last "SELECT last_insert_rowid()" but this is simple
+                return lookupId(writer, SYSTEMS_TABLE, name);
+            } else {
+                return exists;
+            }
+
         } catch (SQLException err) {
-            throw new RuntimeException("could not lookup/add sysName:" + err);
+            throw new RuntimeException("could not add system:" + err);
         }
     }
 

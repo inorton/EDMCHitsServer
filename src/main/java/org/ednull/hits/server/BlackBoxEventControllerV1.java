@@ -2,6 +2,8 @@ package org.ednull.hits.server;
 
 import org.ednull.hits.data.BBEvent;
 import org.ednull.hits.data.DataStore;
+import org.ednull.hits.data.IncidentScanner;
+import org.ednull.hits.data.NameNotFoundError;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.ErrorMvcAutoConfiguration;
@@ -22,17 +24,14 @@ import java.time.Instant;
 public class BlackBoxEventControllerV1 {
 
     private final DataStore dataStore;
-
-    @Autowired
-    public BlackBoxEventControllerV1(DataStore dataStore) {
-        this.dataStore = dataStore;
-    }
+    private final EddnPump dataPump;
+    private final IncidentScanner incidentScanner;
 
     static final String BLACK_BOX_PATH_V1 = "/blackbox/v1";
 
     @RequestMapping(value = "/submit", method = RequestMethod.POST)
     public void submitEvent(
-            @RequestBody BoxEvent inputEvent) {
+            @RequestBody BoxEvent inputEvent) throws NameNotFoundError {
 
         BBEvent evt = new BBEvent();
         evt.setApp(dataStore.lookupApp(inputEvent.app));
@@ -42,5 +41,14 @@ public class BlackBoxEventControllerV1 {
         evt.setEventName(inputEvent.eventName);
 
         dataStore.addEvent(evt);
+    }
+
+    @Autowired
+    public BlackBoxEventControllerV1(EddnPump dataPump, IncidentScanner incidentScanner, DataStore dataStore) {
+        this.dataStore = dataStore;
+        this.dataPump = dataPump;
+        this.incidentScanner = incidentScanner;
+
+        this.dataPump.start();
     }
 }

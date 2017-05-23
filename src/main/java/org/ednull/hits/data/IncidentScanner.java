@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.print.DocFlavor;
 import javax.xml.crypto.Data;
+import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -140,17 +141,35 @@ public class IncidentScanner {
                                         Duration since = Duration.between(lastevt.time, evt.time);
                                         if (since.toMinutes() < DOCKED_GRACE_PERIOD.toMinutes()) {
                                             // not quite enough time to restart the game and forget to launch edmc
-                                            synchronized (possible) {
-                                                possible.put(evt.identity, evt);
-                                                logger.info(String.format("%s possibly destroyed at %s", evt.identity,
-                                                                dataStore.lookupSystem(lastevt.systemId)));
-                                            }
+
+                                            BBEvent destroyed = new BBEvent();
+                                            destroyed.setEventName(BBEvent.DESTORYED);
+                                            destroyed.setSubmitter(evt.identity);
+                                            destroyed.setTimestamp(new Timestamp(evt.time.toEpochMilli()));
+                                            destroyed.setApp(dataStore.lookupApp(app));
+                                            destroyed.setStarSystem(evt.systemId);
+
+                                            dataStore.addEvent(destroyed);
+                                            logger.info(
+                                                    String.format(
+                                                            "%s possibly destroyed at %s",
+                                                            evt.identity, dataStore.lookupSystem(lastevt.systemId)));
+
                                             clearIdentityRecord(evt);
                                         }
                                     } else {
                                         // safe arrival since last jump
                                         logger.info(String.format("%s arrived safely at %s", evt.identity, system));
                                         clearIdentityRecord(evt);
+
+                                        BBEvent arrived = new BBEvent();
+                                        arrived.setEventName(BBEvent.ARRIVED);
+                                        arrived.setSubmitter(evt.identity);
+                                        arrived.setTimestamp(new Timestamp(evt.time.toEpochMilli()));
+                                        arrived.setApp(dataStore.lookupApp(app));
+                                        arrived.setStarSystem(evt.systemId);
+
+                                        dataStore.addEvent(arrived);
                                     }
                                 }
 

@@ -225,8 +225,8 @@ public class SQLiteDataStore implements DataStore {
         try (Connection writer = getWriteConnection()) {
             PreparedStatement sth = writer.prepareStatement(new StringBuilder()
                     .append(String.format("INSERT INTO %S ", EVENTS_TABLE))
-                    .append("app, submitter, starSystem, eventName, timeStamp ")
-                    .append("VALUES (?, ?, ?, ?, ?")
+                    .append("(app, submitter, starSystem, eventName, timeStamp) ")
+                    .append("VALUES (?, ?, ?, ?, ?)")
                     .toString());
 
             sth.setLong(1, event.getApp());
@@ -239,7 +239,7 @@ public class SQLiteDataStore implements DataStore {
             writer.commit();
             Statement idx = writer.createStatement();
             ResultSet rs = idx.executeQuery(
-                    String.format("SELECT last_insert_id() as last_id from %S", EVENTS_TABLE));
+                    String.format("SELECT last_insert_rowid() as last_id from %S", EVENTS_TABLE));
             return rs.getLong("last_id");
 
         } catch (SQLException err) {

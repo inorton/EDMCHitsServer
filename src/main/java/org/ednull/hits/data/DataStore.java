@@ -41,13 +41,6 @@ public interface DataStore {
     String lookupSystem(long id) throws NameNotFoundError;
 
     /**
-     * Load a given event from the data store
-     * @param id
-     * @return
-     */
-    BBEvent getEvent(long id) throws BBEventNotFound;
-
-    /**
      * Add a new event to the data store returning it's unique ID
      * @param event
      * @return
@@ -69,4 +62,18 @@ public interface DataStore {
      * @return
      */
     String[] dangerSystems(int max, long since);
+
+    /**
+     * Delete excess database events
+     * @param maxEventCount
+     */
+    void prune(long maxEventCount);
+
+    /**
+     * Produce a report about a system
+     * @param systemId
+     * @param hours
+     * @return
+     */
+    SystemReport getReport(long systemId, int hours) throws NameNotFoundError;
 }

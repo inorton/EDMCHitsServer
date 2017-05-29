@@ -42,8 +42,10 @@ public class EddnPump extends Thread {
     }
 
     private void summary() {
-        if (eventCount % 200 == 0)
+        if (eventCount % 200 == 0) {
             logger.info(String.format("pumped %d events", eventCount));
+            scanner.clean();
+        }
     }
 
     public synchronized void pump() {

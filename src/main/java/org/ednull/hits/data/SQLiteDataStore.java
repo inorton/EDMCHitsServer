@@ -182,43 +182,6 @@ public class SQLiteDataStore implements DataStore {
         }
     }
 
-
-    private PreparedStatement getSelectEvent() throws SQLException {
-        PreparedStatement sth = connection.prepareStatement(new StringBuilder()
-                .append("SELECT ").append("starSystem, eventName, timeStamp, app, submitter, wing")
-                .append(String.format("hostileParty FROM %s ", EVENTS_TABLE))
-                .append("WHERE id = ?").toString());
-        sth.clearParameters();
-        return sth;
-    }
-
-    @Override
-    public BBEvent getEvent(long id) {
-        BBEvent event = new BBEvent();
-        try {
-            try (PreparedStatement sth = getSelectEvent() ) {
-                sth.setLong(1, id);
-                ResultSet resultSet = sth.executeQuery();
-
-                if (resultSet.first()) {
-                    event.setEventId(id);
-                    event.setStarSystem(resultSet.getInt("starSystem"));
-                    event.setSubmitter(resultSet.getString("submitter"));
-                    event.setEventName(resultSet.getString("eventName"));
-                    event.setTimestamp(resultSet.getTimestamp("timeStamp"));
-                    event.setApp(resultSet.getLong("app"));
-                    return event;
-                }
-            }
-
-        } catch (SQLException err ){
-            err.printStackTrace();
-            throw new RuntimeException(err.getMessage());
-        }
-
-        throw new BBEventNotFound("could not find event: " + id);
-    }
-
     @Override
     public long addEvent(BBEvent event) {
         // check for wing, app and system
@@ -309,5 +272,76 @@ public class SQLiteDataStore implements DataStore {
     @Override
     public String[] dangerSystems(int max, long since) {
         return new String[0];
+    }
+
+    @Override
+    public void prune(long maxEventCount){
+        long size = 0;
+        try (PreparedStatement sth = connection.prepareStatement(new StringBuilder()
+                .append(String.format("SELECT count(id) as num FROM %s", EVENTS_TABLE)).toString()))
+        {
+            sth.clearParameters();
+            ResultSet resultSet = sth.executeQuery();
+
+            if (resultSet.next()) {
+                size = resultSet.getLong("num");
+            }
+        } catch (SQLException err ){
+            err.printStackTrace();
+            throw new RuntimeException(err.getMessage());
+        }
+        if (size > maxEventCount){
+            try {
+                // trim the older events
+                try (Connection writer = getWriteConnection()) {
+                    PreparedStatement sth = writer.prepareStatement(
+                            "DELETE FROM events WHERE id IN (SELECT id FROM events ORDER BY timeStamp ASC LIMIT 100)");
+                    sth.execute();
+                    writer.commit();
+                }
+            } catch (SQLException err){
+                err.printStackTrace();
+            }
+        }
+    }
+
+    public SystemReport getReport(long systemId, int hours) throws NameNotFoundError {
+        SystemReport report = new SystemReport();
+        report.systemName = lookupSystem(systemId);
+
+        long earliest = (System.currentTimeMillis() - (hours * 60 * 60000));
+
+        StringBuilder sb = new StringBuilder()
+                .append(String.format("SELECT count(id) as ct, eventName from %S ", EVENTS_TABLE))
+                .append("WHERE starSystem == ? AND timeStamp > ? ")
+                .append("GROUP BY eventName");
+        String query = sb.toString();
+        long totalVisits = 0;
+        try (PreparedStatement sth = connection.prepareStatement(query)) {
+            sth.clearParameters();
+            sth.setLong(1, systemId);
+            sth.setLong(2, earliest);
+            ResultSet resultSet = sth.executeQuery();
+
+            while (resultSet.next()) {
+                long number = resultSet.getLong("ct");
+                String event = resultSet.getString("eventName");
+                totalVisits += number;
+                if (event.equals(BBEvent.ARRIVED)) {
+                    report.arrived = number;
+                }
+                if (event.equals(BBEvent.DESTORYED)) {
+                    report.destroyed = number;
+                }
+                if (event.equals(BBEvent.INTERDICTED)){
+                    report.interdicted = number;
+                }
+            }
+            report.totalVisits = totalVisits;
+        } catch (SQLException err ){
+            err.printStackTrace();
+        }
+
+        return report;
     }
 }

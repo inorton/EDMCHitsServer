@@ -31,6 +31,10 @@ public class IncidentScanner {
             "E:D Market Connector"
     };
 
+    public void clean() {
+        dataStore.prune(65000);
+    }
+
     // store ships last fsd jump and last docked
     private HashMap<String, JournalEvent> records = new HashMap<>();
 

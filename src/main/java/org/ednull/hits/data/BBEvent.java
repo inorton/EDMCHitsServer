@@ -9,6 +9,7 @@ public class BBEvent {
 
     public static final String DESTORYED = "Destroyed";
     public static final String ARRIVED = "Arrived";
+    public static final String INTERDICTED = "Interdicted";
 
     /**
      * Unique identifier for this event log.

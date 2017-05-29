@@ -64,6 +64,7 @@ public class BlackBoxEventControllerV1 {
             report.destroyed = systemReport.destroyed;
             report.interdicted = systemReport.interdicted;
             report.arrived = systemReport.arrived;
+            report.advice = RiskAdviser.getAdvice(systemReport);
 
             return ResponseEntity.ok(report);
         } catch (NameNotFoundError err) {

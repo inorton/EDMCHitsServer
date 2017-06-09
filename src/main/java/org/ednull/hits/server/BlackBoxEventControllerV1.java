@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * JSON service for accepting black box events
@@ -43,6 +45,29 @@ public class BlackBoxEventControllerV1 {
         } else {
             throw new BBEventNotFound("invalid event name given");
         }
+    }
+
+    @RequestMapping(value = "/hot", method = RequestMethod.GET)
+    public ResponseEntity<List<LocationReport>> getHotspots(
+            @RequestParam int hours
+    ) {
+        List<SystemReport> hotsystems = dataStore.dangerSystems(10, hours);
+        List<LocationReport> reports = new ArrayList<>();
+
+        for (SystemReport systemReport : hotsystems) {
+            LocationReport report = new LocationReport();
+            report.systemName = systemReport.systemName;
+            report.totalVisits = systemReport.totalVisits;
+            report.periodHours = hours;
+            report.destroyed = systemReport.destroyed;
+            report.interdicted = systemReport.interdicted;
+            report.arrived = systemReport.arrived;
+            report.advice = RiskAdviser.getAdvice(systemReport);
+
+            reports.add(report);
+        }
+
+        return ResponseEntity.ok(reports);
     }
 
     /**

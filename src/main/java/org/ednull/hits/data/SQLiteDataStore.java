@@ -4,6 +4,7 @@ import org.sqlite.SQLiteConnection;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by inb on 06/05/2017.
@@ -270,8 +271,37 @@ public class SQLiteDataStore implements DataStore {
     }
 
     @Override
-    public String[] dangerSystems(int max, long since) {
-        return new String[0];
+    public List<SystemReport> dangerSystems(int max, int hours) {
+        long earliest = (System.currentTimeMillis() - (hours * 60 * 60000));
+        ArrayList<SystemReport> systems = new ArrayList<>();
+        ArrayList<Long> found = new ArrayList<>();
+        try (PreparedStatement sth = connection.prepareStatement(
+                "SELECT starSystem, count(events.id) AS ct " +
+                        "FROM events " +
+                        "WHERE eventName == \"Destroyed\" " +
+                        "AND timeStamp > ? " +
+                        "GROUP BY starSystem ORDER BY ct DESC LIMIT 10;") ) {
+
+            sth.clearParameters();
+            sth.setLong(1, earliest);
+            ResultSet resultSet = sth.executeQuery();
+
+            while (resultSet.next()) {
+                found.add(resultSet.getLong(1));
+            }
+        } catch (SQLException err ){
+            err.printStackTrace();
+            throw new RuntimeException(err.getMessage());
+        }
+
+        for (Long sysid : found) {
+            try {
+                systems.add(getReport(sysid.longValue(), hours));
+            } catch (NameNotFoundError ignore){
+            }
+        }
+
+        return systems;
     }
 
     @Override

@@ -1,6 +1,7 @@
 package org.ednull.hits.data;
 
 import java.sql.Timestamp;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -58,10 +59,10 @@ public interface DataStore {
     /**
      * Get the top few most dangerous systems
      * @param max
-     * @param since only include events after this time
+     * @param hours only include events newer than this
      * @return
      */
-    String[] dangerSystems(int max, long since);
+    List<SystemReport> dangerSystems(int max, int hours);
 
     /**
      * Delete excess database events

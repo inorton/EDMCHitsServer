@@ -280,10 +280,11 @@ public class SQLiteDataStore implements DataStore {
                         "FROM events " +
                         "WHERE eventName == \"Destroyed\" " +
                         "AND timeStamp > ? " +
-                        "GROUP BY starSystem ORDER BY ct DESC LIMIT 10;") ) {
+                        "GROUP BY starSystem ORDER BY ct DESC LIMIT ?;") ) {
 
             sth.clearParameters();
             sth.setLong(1, earliest);
+            sth.setInt(2, max);
             ResultSet resultSet = sth.executeQuery();
 
             while (resultSet.next()) {

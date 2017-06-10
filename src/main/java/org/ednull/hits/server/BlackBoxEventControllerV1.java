@@ -51,19 +51,11 @@ public class BlackBoxEventControllerV1 {
     public ResponseEntity<List<LocationReport>> getHotspots(
             @RequestParam int hours
     ) {
-        List<SystemReport> hotsystems = dataStore.dangerSystems(10, hours);
+        List<SystemReport> hotsystems = dataStore.dangerSystems(5, hours);
         List<LocationReport> reports = new ArrayList<>();
 
         for (SystemReport systemReport : hotsystems) {
-            LocationReport report = new LocationReport();
-            report.systemName = systemReport.systemName;
-            report.totalVisits = systemReport.totalVisits;
-            report.periodHours = hours;
-            report.destroyed = systemReport.destroyed;
-            report.interdicted = systemReport.interdicted;
-            report.arrived = systemReport.arrived;
-            report.advice = RiskAdviser.getAdvice(systemReport);
-
+            LocationReport report = LocationReport.FromSystemReport(systemReport, hours);
             reports.add(report);
         }
 
@@ -82,15 +74,8 @@ public class BlackBoxEventControllerV1 {
         try {
             long sysId = dataStore.lookupSystem(systemName);
             SystemReport systemReport = dataStore.getReport(sysId, hours);
-            LocationReport report = new LocationReport();
-            report.systemName = systemReport.systemName;
-            report.totalVisits = systemReport.totalVisits;
-            report.periodHours = hours;
-            report.destroyed = systemReport.destroyed;
-            report.interdicted = systemReport.interdicted;
-            report.arrived = systemReport.arrived;
-            report.advice = RiskAdviser.getAdvice(systemReport);
 
+            LocationReport report = LocationReport.FromSystemReport(systemReport, hours);
             return ResponseEntity.ok(report);
         } catch (NameNotFoundError err) {
             return new ResponseEntity<LocationReport>(HttpStatus.NOT_FOUND);

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>HITS Home</title>
+    <link rel="stylesheet" type="text/css" href="/css/theme.css"/>
+
+
+
+</head>
+<body>
+
+
+    <h1>HITS: Hostile Interaction Tracking System</h1>
+
+    <h3>Most Dangerous Systems Report(last 36 hours)</h3>
+
+    <!--/*@thymesVar id="hot36" type="List<org.ednull.hits.server.LocationReport>"*/-->
+    <blockquote class="systemReports">
+        <div th:each=" location : ${hot36}" class="systemReport">
+            <!--/*@thymesVar id="location" type="org.ednull.hits.server.LocationReport"*/-->
+            <div class="systemName">
+                <b th:text="${location.systemName}"></b>
+            </div>
+            <div class="systemDestroyed">
+                Ships missing/destroyed: <span th:text="${location.destroyed}"></span>
+            </div>
+            <div class="systemVisits">
+                Total traffic in last <span th:text="${location.periodHours}"></span> hours:
+                <span th:text="${location.arrived}"></span>
+            </div>
+            <div class="riskBarGraph" style="width:75%; margin: auto; margin-top: 0.5em; background-color: #009900">
+                <div class="riskBarDestroyed" th:style="'margin: 0; padding: 2px; display: block; background-color: #880000; width:' + ${location.destroyed} * 100.0 /${location.arrived} + '%'" th:text="${location.destroyed}"></div>
+            </div>
+        </div>
+    </blockquote>
+
+    Real-time system risk-levels. Remlock (EDMC) Client: <a href="https://github.com/inorton/EDMCHits/releases">here</a>
+</body>
+</html>

@@ -18,3 +18,22 @@ h1, h2, h3 {
 a {
     color: darksalmon;
 }
+
+div.systemName {
+    font-size-adjust: 1.3;
+}
+
+div.systemVisits {
+    font-style: italic;
+}
+
+*.systemReports {
+    background-color: #111111;
+    border: 1px solid #FF8C0D;
+    padding: 0.2em;
+}
+
+*.systemReport {
+    padding: 0.1em;
+    padding-bottom: 1em;
+}

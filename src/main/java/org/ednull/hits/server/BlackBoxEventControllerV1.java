@@ -26,7 +26,7 @@ public class BlackBoxEventControllerV1 {
     private final EddnPump dataPump;
     private final IncidentScanner incidentScanner;
 
-    static final String CLIENT_LATEST_RELEASE = "0.2.4";
+    static final String CLIENT_LATEST_RELEASE = "0.2.5";
     static final String BLACK_BOX_PATH_V1 = "/hits/v1";
 
     @RequestMapping(value = "/crime", method = RequestMethod.POST)
@@ -113,6 +113,7 @@ public class BlackBoxEventControllerV1 {
             datacrime.starSystem = dataStore.lookupSystem(crime.starSystem);
             dataStore.addSighting(datacrime.pilot, datacrime.starSystem, datacrime.timestamp);
             result = "accepted";
+
         } catch (NameNotFoundError nameNotFoundError) {
             // it's not an "error" if the system doesn't exist yet.
             result = "unknown system";

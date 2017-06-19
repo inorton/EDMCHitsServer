@@ -246,6 +246,7 @@ public class SQLiteDataStore implements DataStore {
             sth.setString(3, crime.offence);
 
             sth.execute();
+            writer.commit();
         } catch (SQLException err) {
             throw new RuntimeException("could not add event:" + err);
         }
@@ -265,6 +266,7 @@ public class SQLiteDataStore implements DataStore {
             sth.setLong(3, starSystem);
 
             sth.execute();
+            writer.commit();
         } catch (SQLException err) {
             throw new RuntimeException("could not add sightimg:" + err);
         }

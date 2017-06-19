@@ -18,9 +18,12 @@ public class SQLiteDataStore implements DataStore {
     public final static String EVENTS_TABLE = "events";
     public final static String PILOTS_TABLE = "pilots";
 
+    public final static String SIGHTINGS_TABLE = "sightings";
+
     public final static String APPS_TABLE = "apps";
     public final static String SYSTEMS_TABLE = "systems";
 
+    public final static String CRIME_TABLE = "crimes";
 
     private void createTables() throws SQLException {
         try (Statement sth = connection.createStatement()) {
@@ -58,6 +61,25 @@ public class SQLiteDataStore implements DataStore {
             sth.execute(syscoords);
             createIndex(sth, SYSTEMS_TABLE, "systems_name",
                     new String[]{"name"}, true);
+
+            String crimes = new StringBuilder()
+                    .append(String.format("CREATE TABLE IF NOT EXISTS %S (", CRIME_TABLE))
+                    .append(" id INTEGER PRIMARY KEY, ")
+                    .append(" pilot INTEGER, ")
+                    .append(" timeStamp INTEGER NOT NULL, ")
+                    .append(" offence TEXT )").toString();
+            sth.execute(crimes);
+            createIndex(sth, CRIME_TABLE, "crime_pilot", new String[]{"pilot"}, false);
+            createIndex(sth, CRIME_TABLE, "crime_time", new String[]{"timeStamp"}, false);
+            createIndex(sth, CRIME_TABLE, "crime_offence", new String[]{"offence"}, false);
+
+            String sightings = new StringBuilder()
+                    .append(String.format("CREATE TABLE IF NOT EXISTS %S (", SIGHTINGS_TABLE))
+                    .append(" pilot INTEGER PRIMARY KEY, ")
+                    .append(" lastStarSystem INTEGER, ")
+                    .append(" timeStamp INTEGER NOT NULL)").toString();
+            sth.execute(sightings);
+            createIndex(sth, SIGHTINGS_TABLE, "sight_id", new String[]{"pilot"}, false);
         }
     }
 
@@ -212,6 +234,43 @@ public class SQLiteDataStore implements DataStore {
     }
 
     @Override
+    public void addCrime(BBCrime crime){
+        try (Connection writer = getWriteConnection()) {
+            PreparedStatement sth = writer.prepareStatement(new StringBuilder()
+                    .append(String.format("INSERT INTO %S ", CRIME_TABLE))
+                    .append("(pilot, timeStamp, offence) ")
+                    .append("VALUES (?, ?, ?)")
+                    .toString());
+            sth.setLong(1, crime.pilot);
+            sth.setTimestamp(2, crime.timestamp);
+            sth.setString(3, crime.offence);
+
+            sth.execute();
+        } catch (SQLException err) {
+            throw new RuntimeException("could not add event:" + err);
+        }
+    }
+
+    @Override
+    public void addSighting(long criminal, long starSystem, Timestamp timestamp)
+    {
+        try (Connection writer = getWriteConnection()) {
+            PreparedStatement sth = writer.prepareStatement(new StringBuilder()
+                    .append(String.format("REPLACE INTO %S ", SIGHTINGS_TABLE))
+                    .append("(pilot, timeStamp, lastStarSystem) ")
+                    .append("VALUES (?, ?, ?)")
+                    .toString());
+            sth.setLong(1, criminal);
+            sth.setTimestamp(2, timestamp);
+            sth.setLong(3, starSystem);
+
+            sth.execute();
+        } catch (SQLException err) {
+            throw new RuntimeException("could not add sightimg:" + err);
+        }
+    }
+
+    @Override
     public long lookupApp(String appname) {
         try {
             return getNameId(APPS_TABLE, appname);
@@ -227,6 +286,77 @@ public class SQLiteDataStore implements DataStore {
             return exists;
         }
         throw new NameNotFoundError(sysName);
+    }
+
+    @Override
+    public long lookupPilot(String name)
+    {
+        try (Connection writer = getWriteConnection()) {
+            long exists = lookupId(writer, PILOTS_TABLE, name);
+            if (exists == 0) {
+                PreparedStatement sth = writer.prepareStatement(new StringBuilder()
+                        .append(String.format("INSERT INTO %S ", PILOTS_TABLE))
+                        .append("(name) ")
+                        .append("VALUES ( ? ) ")
+                        .toString());
+                sth.setString(1, name);
+                sth.execute();
+                writer.commit();
+
+                exists = lookupId(writer, PILOTS_TABLE, name);
+            }
+            return exists;
+        } catch (SQLException err) {
+            throw new RuntimeException("could not add pilot:" + err);
+        }
+    }
+
+    @Override
+    public CriminalRecord lookupCrimes(long pilot, long hours){
+        CriminalRecord record = new CriminalRecord();
+
+        long earliest = (System.currentTimeMillis() - (hours * 60 * 60000));
+
+        StringBuilder sb = new StringBuilder()
+                .append(String.format("SELECT count(id) as ct from %S ", CRIME_TABLE))
+                .append("WHERE pilot == ? AND timeStamp > ? AND offence == 'interdiction'");
+        String query = sb.toString();
+
+        try (PreparedStatement sth = connection.prepareStatement(query)) {
+            sth.clearParameters();
+            sth.setLong(1, pilot);
+            sth.setLong(2, earliest);
+            ResultSet resultSet = sth.executeQuery();
+
+            while (resultSet.next()) {
+                record.interdictions = resultSet.getInt("ct");
+            }
+
+        } catch (SQLException err ){
+            err.printStackTrace();
+        }
+
+        sb = new StringBuilder()
+                .append(String.format("SELECT count(id) as ct from %S ", CRIME_TABLE))
+                .append("WHERE pilot == ? AND timeStamp > ? AND offence == 'murder'");
+        query = sb.toString();
+
+        try (PreparedStatement sth = connection.prepareStatement(query)) {
+            sth.clearParameters();
+            sth.setLong(1, pilot);
+            sth.setLong(2, earliest);
+            ResultSet resultSet = sth.executeQuery();
+
+            while (resultSet.next()) {
+                record.murders = resultSet.getInt("ct");
+            }
+
+        } catch (SQLException err ){
+            err.printStackTrace();
+        }
+
+
+        return record;
     }
 
     @Override
@@ -305,11 +435,10 @@ public class SQLiteDataStore implements DataStore {
         return systems;
     }
 
-    @Override
-    public void prune(long maxEventCount){
+    private void pruneTable(String tableName, long max) {
         long size = 0;
         try (PreparedStatement sth = connection.prepareStatement(new StringBuilder()
-                .append(String.format("SELECT count(id) as num FROM %s", EVENTS_TABLE)).toString()))
+                .append(String.format("SELECT count(timeStamp) as num FROM %s", tableName)).toString()))
         {
             sth.clearParameters();
             ResultSet resultSet = sth.executeQuery();
@@ -321,12 +450,13 @@ public class SQLiteDataStore implements DataStore {
             err.printStackTrace();
             throw new RuntimeException(err.getMessage());
         }
-        if (size > maxEventCount){
+        if (size > max){
             try {
                 // trim the older events
                 try (Connection writer = getWriteConnection()) {
                     PreparedStatement sth = writer.prepareStatement(
-                            "DELETE FROM events WHERE id IN (SELECT id FROM events ORDER BY timeStamp ASC LIMIT 100)");
+                            String.format("DELETE FROM %s WHERE id IN (SELECT id FROM %s ORDER BY timeStamp ASC LIMIT 100)",
+                                    tableName, tableName));
                     sth.execute();
                     writer.commit();
                 }
@@ -334,6 +464,12 @@ public class SQLiteDataStore implements DataStore {
                 err.printStackTrace();
             }
         }
+    }
+
+    @Override
+    public void prune(long maxEventCount){
+        pruneTable(EVENTS_TABLE, maxEventCount);
+        pruneTable(CRIME_TABLE, maxEventCount);
     }
 
     public SystemReport getReport(long systemId, int hours) throws NameNotFoundError {

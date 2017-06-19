@@ -27,11 +27,12 @@
                 Ships missing/destroyed: <span th:text="${location.destroyed}"></span>
             </div>
             <div class="systemVisits">
-                Total traffic in last <span th:text="${location.periodHours}"></span> hours:
+                Total safe arrivals in last <span th:text="${location.periodHours}"></span> hours:
                 <span th:text="${location.arrived}"></span>
             </div>
             <div class="riskBarGraph" style="width:75%; margin: auto; margin-top: 0.5em; background-color: #009900">
-                <div class="riskBarDestroyed" th:style="'margin: 0; padding: 2px; display: block; background-color: #880000; width:' + ${location.destroyed} * 100.0 /${location.arrived} + '%'" th:text="${location.destroyed}"></div>
+                <div class="riskBarDestroyed"
+                     th:style="'margin: 0; padding: 2px; display: block; background-color: #880000; width:' + ${location.destroyed} * 100.0 /${location.arrived + location.destroyed} + '%'" th:text="${location.destroyed}"></div>
             </div>
         </div>
     </blockquote>

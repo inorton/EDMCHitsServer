@@ -10,6 +10,20 @@ import java.util.List;
 public interface DataStore {
 
     /**
+     * Report a crime
+     * @param crime
+     */
+    void addCrime(BBCrime crime);
+
+    /**
+     * Report contact
+     * @param criminal
+     * @param starSystem
+     * @param  timestamp
+     */
+    void addSighting(long criminal, long starSystem, Timestamp timestamp);
+
+    /**
      * get the ID for a given app name
      * @param appname
      * @return
@@ -77,4 +91,18 @@ public interface DataStore {
      * @return
      */
     SystemReport getReport(long systemId, int hours) throws NameNotFoundError;
+
+    /**
+     * Given a name, get a pilot id
+     * @param name
+     * @return
+     */
+    long lookupPilot(String name);
+
+    /**
+     * Lookup the criminal record of a pilot
+     * @param pilot
+     * @return
+     */
+    CriminalRecord lookupCrimes(long pilot, long hours);
 }

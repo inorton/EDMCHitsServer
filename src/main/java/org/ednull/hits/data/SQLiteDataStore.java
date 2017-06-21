@@ -283,9 +283,11 @@ public class SQLiteDataStore implements DataStore {
 
     @Override
     public long lookupSystem(String sysName) throws NameNotFoundError {
-        long exists = lookupId(SYSTEMS_TABLE, sysName);
-        if (exists > 0) {
-            return exists;
+        if(sysName != null) {
+            long exists = lookupId(SYSTEMS_TABLE, sysName);
+            if (exists > 0) {
+                return exists;
+            }
         }
         throw new NameNotFoundError(sysName);
     }
@@ -398,15 +400,50 @@ public class SQLiteDataStore implements DataStore {
     }
 
     @Override
-    public String[] busySystems(int max, long since) {
-        return new String[0];
+    public List<SystemReport> busySystems(int max, int hours) {
+        long earliest = (System.currentTimeMillis() - (hours * 60 * 60000));
+        ArrayList<SystemReport> systems = new ArrayList<>();
+        ArrayList<Long> found;
+        try (PreparedStatement sth = connection.prepareStatement(
+                "SELECT starSystem, count(events.id) AS ct " +
+                        "FROM events " +
+                        "WHERE timeStamp > ? " +
+                        "GROUP BY starSystem ORDER BY ct DESC LIMIT ?;") ) {
+
+            found = gatherSystemReports(max, earliest, sth);
+        } catch (SQLException err ){
+            err.printStackTrace();
+            throw new RuntimeException(err.getMessage());
+        }
+
+        for (Long sysid : found) {
+            try {
+                systems.add(getReport(sysid.longValue(), hours));
+            } catch (NameNotFoundError ignore){
+            }
+        }
+
+        return systems;
+    }
+
+    private static ArrayList<Long> gatherSystemReports(int max, long earliest, PreparedStatement sth) throws SQLException {
+        ArrayList<Long> found = new ArrayList<>();
+        sth.clearParameters();
+        sth.setLong(1, earliest);
+        sth.setInt(2, max);
+        ResultSet resultSet = sth.executeQuery();
+
+        while (resultSet.next()) {
+            found.add(resultSet.getLong(1));
+        }
+        return found;
     }
 
     @Override
     public List<SystemReport> dangerSystems(int max, int hours) {
         long earliest = (System.currentTimeMillis() - (hours * 60 * 60000));
         ArrayList<SystemReport> systems = new ArrayList<>();
-        ArrayList<Long> found = new ArrayList<>();
+        ArrayList<Long> found;
         try (PreparedStatement sth = connection.prepareStatement(
                 "SELECT starSystem, count(events.id) AS ct " +
                         "FROM events " +
@@ -414,14 +451,7 @@ public class SQLiteDataStore implements DataStore {
                         "AND timeStamp > ? " +
                         "GROUP BY starSystem ORDER BY ct DESC LIMIT ?;") ) {
 
-            sth.clearParameters();
-            sth.setLong(1, earliest);
-            sth.setInt(2, max);
-            ResultSet resultSet = sth.executeQuery();
-
-            while (resultSet.next()) {
-                found.add(resultSet.getLong(1));
-            }
+            found = gatherSystemReports(max, earliest, sth);
         } catch (SQLException err ){
             err.printStackTrace();
             throw new RuntimeException(err.getMessage());
@@ -506,6 +536,7 @@ public class SQLiteDataStore implements DataStore {
                     report.interdicted = number;
                 }
             }
+            sth.close();
             report.totalVisits = totalVisits;
         } catch (SQLException err ){
             err.printStackTrace();

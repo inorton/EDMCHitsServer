@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8"/>
+</head>
+<body>
+<div th:fragment="systemReport">
+    <!--/*@thymesVar id="location" type="org.ednull.hits.server.LocationReport"*/-->
+    <div class="systemName">
+        <b th:text="${location.systemName}"></b>
+    </div>
+    <div class="systemDestroyed">
+        Ships missing/destroyed: <span th:text="${location.destroyed}"></span>
+    </div>
+    <div class="systemVisits">
+        Total safe arrivals in last <span th:text="${location.periodHours}"></span> hours:
+        <span th:text="${location.arrived}"></span>
+    </div>
+    <!--
+    <div class="riskBarGraph" style="width:75%; margin: auto; margin-top: 0.5em; background-color: #009900">
+        <div class="riskBarDestroyed"
+             th:style="'margin: 0; padding: 2px; display: block; background-color: #880000; width:' + ${location.destroyed} * 100.0 /${location.arrived + location.destroyed} + '%'" th:text="${location.destroyed}"></div>
+    </div>
+    -->
+
+    <div style="width: 92%">
+        <canvas class="eventGraph" th:id='${"sys_canvas_" + location.systemNameEscaped}'>
+    </canvas>
+    </div>
+    <script type="text/javascript" th:inline="javascript">
+        load_system_graph([[${"#sys_canvas_" + location.systemNameEscaped}]], [[${location.systemName}]], [[${location.periodHours}]])
+    </script>
+
+</div>
+</body>
+</html>

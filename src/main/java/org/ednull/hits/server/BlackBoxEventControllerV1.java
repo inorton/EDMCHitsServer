@@ -26,7 +26,7 @@ public class BlackBoxEventControllerV1 {
     private final EddnPump dataPump;
     private final IncidentScanner incidentScanner;
 
-    static final String CLIENT_LATEST_RELEASE = "0.2.5";
+    static final String CLIENT_LATEST_RELEASE = "0.2.6";
     static final String BLACK_BOX_PATH_V1 = "/hits/v1";
 
     @RequestMapping(value = "/crime", method = RequestMethod.POST)

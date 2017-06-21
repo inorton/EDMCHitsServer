@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="fragments/header :: head"></head>
+    <body>
+        <div th:replace="fragments/header :: navbar"></div>
+        <h3>Most Active Systems (last 24 hrs)</h3>
+
+        <blockquote class="systemReports">
+            <!--/*@thymesVar id="reports" type="List<org.ednull.hits.server.LocationReport>"*/-->
+            <div th:each=" location : ${reports}" class="systemReport">
+                <div th:replace="fragments/systemreport :: systemReport"></div>
+            </div>
+        </blockquote>
+
+
+    </body>
+</html>

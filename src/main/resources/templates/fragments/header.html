@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+    <head th:fragment="head">
+        <meta charset="UTF-8"/>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <!--/*@thymesVar id="title" type="String"*/-->
+        <title th:text="'HITS : ' + ${title}"></title>
+        <link rel="stylesheet" type="text/css" href="/css/theme.css"/>
+        <script type="text/javascript" src="/js/Chart.bundle.min.js"></script>
+        <script type="text/javascript" src="/js/jquery-3.2.1.min.js"></script>
+        <script type="text/javascript" src="/js/chartdata.js"></script>
+    </head>
+    <body>
+        <div th:fragment="navbar" id="navbar">
+            <div>
+                <h1>HITS:</h1>
+                <a href="/" class="button">Hotspots</a>
+                <a href="/systems" class="button">Systems</a>
+            </div>
+        <small>Hostile Interaction Tracking System</small>
+        </div>
+    </body>
+</html>

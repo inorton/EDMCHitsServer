@@ -65,10 +65,10 @@ public interface DataStore {
     /**
      * Get the top few most busy systems
      * @param max
-     * @param since only include events after this time
+     * @param hours only include events after many hours in the past
      * @return
      */
-    String[] busySystems(int max, long since);
+    List<SystemReport> busySystems(int max, int hours);
 
     /**
      * Get the top few most dangerous systems

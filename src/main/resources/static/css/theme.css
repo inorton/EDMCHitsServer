@@ -1,6 +1,8 @@
 body {
     background-color: #333333;
     color: #efefef;
+    margin: 0;
+    padding: 1em;
 }
 
 * {
@@ -36,4 +38,46 @@ div.systemVisits {
 *.systemReport {
     padding: 0.1em;
     padding-bottom: 1em;
+}
+
+.eventGraph {
+    height: 4cm;
+    width: 90%;
+    display: block;
+}
+
+#navbar {
+    padding: 2mm;
+    margin: -1em;
+    background-color: #040404;
+}
+
+#navbar h1 {
+    display: inline-block;
+    margin: 2px;
+    vertical-align: middle;
+    padding: 0;
+}
+
+#navbar .button {
+    display: inline-block;
+    width: 5em;
+    height: 1.1em;
+    background: #222222;
+    padding: 10px;
+    text-align: center;
+    border-radius: 5px;
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+#navbar .button:hover {
+    background: #FF8C0D;
+}
+
+canvas {
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
 }

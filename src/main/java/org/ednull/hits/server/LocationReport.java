@@ -14,7 +14,7 @@ public class LocationReport {
     public long arrived;
     public long destroyed;
     public long interdicted;
-
+    public String systemNameEscaped;
 
     public static LocationReport FromSystemReport(SystemReport systemReport, int periodHours) {
         LocationReport report = new LocationReport();
@@ -25,6 +25,7 @@ public class LocationReport {
         report.destroyed = systemReport.destroyed;
         report.systemName = systemReport.systemName;
         report.periodHours = periodHours;
+        report.systemNameEscaped = systemReport.systemName.replace(" ", "__");
         return report;
     }
 }

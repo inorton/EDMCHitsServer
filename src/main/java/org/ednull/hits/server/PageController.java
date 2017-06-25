@@ -21,6 +21,8 @@ public class PageController {
 
     DataStore dataStore;
 
+    static final int MAX_SYSTEMS = 8;
+
     public PageController(@Autowired DataStore dataStore) {
         this.dataStore = dataStore;
     }
@@ -43,32 +45,47 @@ public class PageController {
         return "hotspots";
     }
 
+    static int checkHours(int hours) {
+        if (hours < 0) {
+            hours = 24;
+        }
+        return Math.min(hours, 240);
+    }
+
     @RequestMapping(value = "/systems", method = RequestMethod.GET)
     public String systems(Model model,
                           @RequestParam(value = "hours", defaultValue = "24") int hours)
     {
         setTitle(model, "Active Systems");
 
+        hours = checkHours(hours);
+
         List<LocationReport> systemReports = new ArrayList<>();
-        for(SystemReport systemReport : dataStore.busySystems(16, hours)) {
+        for(SystemReport systemReport : dataStore.busySystems(MAX_SYSTEMS, hours)) {
             systemReports.add(LocationReport.FromSystemReport(systemReport, hours));
         }
 
+        model.addAttribute("hours", hours);
         model.addAttribute("reports", systemReports);
         return "systems";
     }
 
     @RequestMapping(value = "/system/{starSystem}", method = RequestMethod.GET)
     public String systemInfo(Model model,
-                             @PathVariable(value = "starSystem", required = true) String name) {
+                             @PathVariable(value = "starSystem", required = true) String name,
+                             @RequestParam(value = "hours", defaultValue = "120") int hours) {
         setTitle(model, String.format("The {} system", name));
 
+        hours = checkHours(hours);
+
         try {
-            dataStore.lookupSystem(name);
+            long system = dataStore.lookupSystem(name);
+            SystemReport report = dataStore.getReport(system, hours);
+            model.addAttribute("location", LocationReport.FromSystemReport(report, hours));
         } catch (NameNotFoundError error) {
             throw new NoSuchLocationError();
         }
-
+        model.addAttribute("hours", hours);
         model.addAttribute("starSystem", name);
         return "system";
     }

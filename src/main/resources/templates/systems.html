@@ -3,7 +3,8 @@
     <head th:replace="fragments/header :: head"></head>
     <body>
         <div th:replace="fragments/header :: navbar"></div>
-        <h3>Most Active Systems (last 24 hrs)</h3>
+        <h3>Most Active Systems (last <!--/*@thymesVar id="hours" type="int"*/-->
+        <span th:text="${hours}"></span> hrs)</h3>
 
         <blockquote class="systemReports">
             <!--/*@thymesVar id="reports" type="List<org.ednull.hits.server.LocationReport>"*/-->

@@ -4,6 +4,14 @@
     <body>
         <div th:replace="fragments/header :: navbar"></div>
 
+        <h3>System Information <!--/*@thymesVar id="starSystem" type="String"*/-->
+        <span th:text="${starSystem}"></span></h3>
+
+        <blockquote class="systemReports">
+            <div class="systemReport">
+                <div th:replace="fragments/systemreport :: systemReport"></div>
+            </div>
+        </blockquote>
 
     </body>
 </html>

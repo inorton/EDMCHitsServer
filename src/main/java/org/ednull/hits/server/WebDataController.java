@@ -42,6 +42,8 @@ public class WebDataController {
             @PathVariable(name = "eventType", required = true) String eventType,
             @RequestParam(name = "hours", defaultValue = "24") int hours)
     {
+        hours = PageController.checkHours(hours);
+
         WebDataSet data = new WebDataSet();
         if (eventType == null) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
@@ -49,14 +51,16 @@ public class WebDataController {
         try {
             long systemId = dataStore.lookupSystem(starSystem);
             data.values = new long[hours];
-            long last = getReportItem(dataStore.getReport(systemId,+ 1), eventType);
+            long last = 0;
 
-            for (int h = 1; h < hours; h++){
-                SystemReport report = dataStore.getReport(systemId, h);
+            for (int h = 0; h < hours; h++){
+                SystemReport report = dataStore.getReport(systemId, h + 1);
                 long reportValue = getReportItem(report, eventType);
-                data.values[h] = reportValue - last;
+                long added = reportValue - last;
+                data.values[h] = added;
                 last = reportValue;
             }
+
 
         } catch (NameNotFoundError error) {
             throw new NoSuchLocationError();

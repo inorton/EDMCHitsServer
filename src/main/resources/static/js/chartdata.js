@@ -24,14 +24,14 @@ function get_system_data(systemName, dataType, hours, callback) {
 function load_system_graph(canvasId, systemName, hours) {
     var can = jQuery(canvasId);
     var ctx = can.get(0).getContext("2d");
-    //var container = can.parent().parent();
-    //var $container = jQuery(container);
-    //can.attr("width", $container.width() - 10);
-    //can.attr("height", $container.height() - 3);
 
     var arrival_data = [];
     var destroyed_data = [];
-    var labels = Array.apply(null, Array(hours)).map(function (_, i) {return i - hours;});
+    var labels = [];
+    labels.push("now");
+    for (var i = 1; i < hours; i++) {
+        labels.push(i * -1 + " hrs");
+    }
 
     get_system_data(systemName, "arrived", hours)
 
@@ -76,7 +76,7 @@ function load_system_graph(canvasId, systemName, hours) {
                         }
                     }],
                     xAxes: [{
-                        display: false,
+                        display: true,
                         ticks: {
                             min: -1 * hours,
                             max: 0
@@ -96,57 +96,4 @@ function load_system_graph(canvasId, systemName, hours) {
 
     get_system_data(systemName, "arrived", hours, handle_arrived);
 
-    /*
-    jQuery.get("/webapi/timeline/" + systemName + "/arrived?hours=" + hours,
-       {
-           action: 'callback_id'
-       },
-       function (arrivals) {
-
-       var labels = Array.apply(null, Array(hours)).map(function (_, i) {return i - hours;});
-       if (arrivals) {
-
-           var config = {
-               type: "line",
-               data: {
-                   labels: labels,
-                   datasets: [
-                       {
-                           label: "Arrivals",
-                           backgroundColor: window.chartColors.green,
-                           borderColor: window.chartColors.green,
-                           data: arrivals.values,
-                           lineTension: 0.1,
-                           fill: true
-                       }
-                   ]
-               },
-               options: {
-                   responsive: true,
-                   maintainAspectRatio: false,
-                   layout: {
-                       padding: 5
-                   },
-                   scales: {
-                       yAxes: [{
-                           stacked: true,
-                           ticks: {
-                               min: 0
-                           }
-                       }],
-                       xAxes: [{
-                           display: false,
-                           ticks: {
-                               min: -1 * hours,
-                               max: 0
-                           }
-                       }]
-                   }
-               }
-           };
-
-           graphs.push(new Chart(ctx, config));
-       }
-   });
-   */
 }

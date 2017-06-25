@@ -13,7 +13,7 @@ apply plugin: 'org.springframework.boot'
 
 jar {
     baseName = 'hits-spring-boot'
-    version =  '0.2.6'
+    version =  '0.2.7'
 }
 
 repositories {

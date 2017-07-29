@@ -26,7 +26,7 @@ public class EddnPump extends Thread {
     Thread pumpThread;
     private boolean started = false;
 
-    public static final String RELAY = "tcp://eddn-relay.elite-markets.net:9500";
+    public static final String RELAY = "tcp://eddn.edcd.io:9500";
     private final IncidentScanner scanner;
 
     @Autowired

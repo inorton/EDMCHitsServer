@@ -21,7 +21,6 @@ public class IncidentScanner {
     Logger logger = LoggerFactory.getLogger(IncidentScanner.class);
 
     public static final String SCHEMA_KEY = "$schemaRef";
-    public static final String SCHEMA_JOURNAL = "http://schemas.elite-markets.net/eddn/journal/1";
 
     public static final String EVENT_FSDJUMP = "FSDJump";
     public static final String EVENT_DOCKED = "Docked";

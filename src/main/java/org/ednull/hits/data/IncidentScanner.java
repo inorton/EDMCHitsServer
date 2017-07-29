@@ -205,7 +205,7 @@ public class IncidentScanner {
 
                         // jump
                         if (event.equals(EVENT_FSDJUMP)) {
-
+                            logger.info("{} jumped into {}", uploader, system);
                         }
 
                         // Scan

@@ -542,9 +542,14 @@ public class SQLiteDataStore implements DataStore {
                 long number = resultSet.getLong("ct");
                 String event = resultSet.getString("eventName");
                 totalVisits += number;
+                if (event.equals(BBEvent.ARRIVED)) {
+                    // depricated, we only store Docked now
+                    report.docked = number;
+                }
                 if (event.equals(BBEvent.DOCKED)) {
                     report.docked = number;
                 }
+
                 if (event.equals(BBEvent.JUMPEDIN)) {
                     report.jumpedin = number;
                 }

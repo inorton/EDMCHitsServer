@@ -215,15 +215,6 @@ public class IncidentScanner {
         // safe arrival since last jump
         logger.info(String.format("%s arrived safely at %s", evt.identity, system));
         clearIdentityRecord(evt);
-
-        BBEvent arrived = new BBEvent();
-        arrived.setEventName(BBEvent.ARRIVED);
-        arrived.setSubmitter(evt.identity);
-        arrived.setTimestamp(new Timestamp(evt.time.toEpochMilli()));
-        arrived.setApp(dataStore.lookupApp(app));
-        arrived.setStarSystem(evt.systemId);
-
-        dataStore.addEvent(arrived);
     }
 
     private void possibleDestruction(String app, JournalEvent lastevt, CompanionEvent evt) throws NameNotFoundError {

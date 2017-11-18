@@ -51,7 +51,7 @@ function load_system_graph(canvasId, systemName, hours) {
                         backgroundColor: window.chartColors.red,
                         borderColor: window.chartColors.red,
                         data: destroyed_data,
-                        lineTension: 0.1,
+                        lineTension: 0.8,
                         pointRadius: 2,
                         fill: true
                     },
@@ -60,7 +60,7 @@ function load_system_graph(canvasId, systemName, hours) {
                         backgroundColor: window.chartColors.yellow,
                         borderColor: window.chartColors.yellow,
                         data: docked_data,
-                        lineTension: 0.9,
+                        lineTension: 0.5,
                         fill: false
                     },
                     {
@@ -68,7 +68,7 @@ function load_system_graph(canvasId, systemName, hours) {
                         backgroundColor: window.chartColors.green,
                         borderColor: window.chartColors.green,
                         data: jumped_data,
-                        lineTension: 0.9,
+                        lineTension: 0.5,
                         fill: false
                     }
 

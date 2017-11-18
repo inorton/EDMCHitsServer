@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="fragments/header :: head"></head>
+    <body>
+        <div th:replace="fragments/header :: navbar"></div>
+
+        <h3>System Search</h3>
+
+        <!--/*@thymesVar id="results" type="java.util.List<java.lang.String>"*/-->
+        <ul>
+            <li th:each=" name : ${results}" class="systemReport">
+                <a th:href="'/system/' + ${name}" th:text="${name}"></a>
+            </li>
+        </ul>
+
+    </body>
+</html>

@@ -189,6 +189,22 @@ public class SQLiteDataStore implements DataStore {
         return saveName(table, name);
     }
 
+    @Override
+    public List<String> searchSystems(String substring) throws SQLException {
+        List<String> results = new ArrayList<String>();
+        PreparedStatement sth = this.connection.prepareStatement(
+                String.format("SELECT name from %S WHERE name LIKE ? ORDER BY name ASC", SYSTEMS_TABLE));
+        sth.setString(1, "%" + substring + "%" );
+        ResultSet resultSet = sth.executeQuery();
+
+        while (resultSet.next()) {
+            String name = resultSet.getString(1);
+            results.add(name);
+        }
+
+        return results;
+    }
+
     private synchronized long saveName(String table, String name) throws SQLException {
         try (Connection writer = getWriteConnection()) {
             PreparedStatement sth = writer.prepareStatement(new StringBuilder()
@@ -526,15 +542,16 @@ public class SQLiteDataStore implements DataStore {
                 long number = resultSet.getLong("ct");
                 String event = resultSet.getString("eventName");
                 totalVisits += number;
-                if (event.equals(BBEvent.ARRIVED)) {
-                    report.arrived = number;
+                if (event.equals(BBEvent.DOCKED)) {
+                    report.docked = number;
+                }
+                if (event.equals(BBEvent.JUMPEDIN)) {
+                    report.jumpedin = number;
                 }
                 if (event.equals(BBEvent.DESTORYED)) {
                     report.destroyed = number;
                 }
-                if (event.equals(BBEvent.INTERDICTED)){
-                    report.interdicted = number;
-                }
+
             }
             sth.close();
             report.totalVisits = totalVisits;

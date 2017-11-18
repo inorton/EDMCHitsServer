@@ -6,7 +6,7 @@ package org.ednull.hits.data;
 public class SystemReport {
     public String systemName;
     public long totalVisits;
-    public long arrived;
+    public long docked;
     public long destroyed;
-    public long interdicted;
+    public long jumpedin;
 }

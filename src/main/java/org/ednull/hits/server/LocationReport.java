@@ -20,8 +20,7 @@ public class LocationReport {
         LocationReport report = new LocationReport();
         report.advice = RiskAdviser.getAdvice(systemReport);
         report.totalVisits = systemReport.totalVisits;
-        report.interdicted = systemReport.interdicted;
-        report.arrived = systemReport.arrived;
+        report.arrived = systemReport.docked;
         report.destroyed = systemReport.destroyed;
         report.systemName = systemReport.systemName;
         report.periodHours = periodHours;

@@ -24,15 +24,16 @@ public class WebDataController {
     }
 
     long getReportItem(SystemReport report, String item) throws NameNotFoundError {
-        if (item.equals("arrived")) {
-            return report.arrived;
+        if (item.equals("docked")) {
+            return report.docked;
+        }
+        if (item.equals("jumpedin")) {
+            return report.jumpedin;
         }
         if (item.equals("destroyed")) {
             return report.destroyed;
         }
-        if (item.equals("interdicted")) {
-            return report.interdicted;
-        }
+
         throw new NameNotFoundError(item);
     }
 
@@ -63,7 +64,7 @@ public class WebDataController {
 
 
         } catch (NameNotFoundError error) {
-            throw new NoSuchLocationError();
+            data.values = new long[hours];
         }
 
         return ResponseEntity.ok(data);

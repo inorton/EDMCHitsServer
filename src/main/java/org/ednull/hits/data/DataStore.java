@@ -1,5 +1,6 @@
 package org.ednull.hits.data;
 
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
@@ -54,6 +55,13 @@ public interface DataStore {
      * @throws NameNotFoundError
      */
     String lookupSystem(long id) throws NameNotFoundError;
+
+    /**
+     * Find systems matching the given substring
+     * @param substring
+     * @return
+     */
+    List<String> searchSystems(String substring) throws SQLException;
 
     /**
      * Add a new event to the data store returning it's unique ID

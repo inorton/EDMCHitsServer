@@ -10,6 +10,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,7 +34,7 @@ public class PageController {
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
     public String hotspot(Model model,
-                          @RequestParam(value = "hours", defaultValue = "36") int hours) {
+                          @RequestParam(value = "hours", defaultValue = "24") int hours) {
         setTitle(model, "Hotspots");
 
         List<LocationReport> systemReports = new ArrayList<>();
@@ -50,6 +51,17 @@ public class PageController {
             hours = 24;
         }
         return Math.min(hours, 240);
+    }
+
+    @RequestMapping(value = "/search", method = RequestMethod.GET)
+    public String search(Model model,
+                         @RequestParam(value = "q", defaultValue = "") String find) throws SQLException {
+        setTitle(model, "Search Systems");
+        if (find.length() > 2) {
+            List<String> found = dataStore.searchSystems(find);
+            model.addAttribute("results", found);
+        }
+        return "search";
     }
 
     @RequestMapping(value = "/systems", method = RequestMethod.GET)
@@ -73,7 +85,7 @@ public class PageController {
     @RequestMapping(value = "/system/{starSystem}", method = RequestMethod.GET)
     public String systemInfo(Model model,
                              @PathVariable(value = "starSystem", required = true) String name,
-                             @RequestParam(value = "hours", defaultValue = "120") int hours) {
+                             @RequestParam(value = "hours", defaultValue = "48") int hours) {
         setTitle(model, String.format("The {} system", name));
 
         hours = checkHours(hours);

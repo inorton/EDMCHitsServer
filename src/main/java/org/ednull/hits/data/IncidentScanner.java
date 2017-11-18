@@ -43,7 +43,7 @@ public class IncidentScanner {
     // store the last system name from Companion api events (from edmc)
     private HashMap<String, CompanionEvent> non_journal = new HashMap<>();
 
-    public static final Duration DOCKED_GRACE_PERIOD = Duration.ofMinutes(15);
+    public static final Duration DOCKED_GRACE_PERIOD = Duration.ofMinutes(6);
     private final DataStore dataStore;
 
     @Autowired
@@ -105,8 +105,9 @@ public class IncidentScanner {
                 Instant timestamp = null;
                 String uploader = (String) header.getOrDefault("uploaderID", null);
                 String app = (String) header.getOrDefault("softwareName", null);
+                long appId = 0;
                 if (app != null)
-                    dataStore.lookupApp(app);
+                    appId = dataStore.lookupApp(app);
 
                 if (!checkAppWhitelist(app))
                     return;
@@ -141,41 +142,11 @@ public class IncidentScanner {
                                 if (lastevt != null) {
                                     // was last journal event in a different system?
                                     if (lastevt.systemId != evt.systemId) {
-                                        Duration since = Duration.between(lastevt.time, evt.time);
-                                        if (since.toMinutes() < DOCKED_GRACE_PERIOD.toMinutes()) {
-                                            // not quite enough time to restart the game and forget to launch edmc
-
-                                            BBEvent destroyed = new BBEvent();
-                                            destroyed.setEventName(BBEvent.DESTORYED);
-                                            destroyed.setSubmitter(evt.identity);
-                                            destroyed.setTimestamp(new Timestamp(evt.time.toEpochMilli()));
-                                            destroyed.setApp(dataStore.lookupApp(app));
-                                            destroyed.setStarSystem(evt.systemId);
-
-                                            dataStore.addEvent(destroyed);
-                                            logger.info(
-                                                    String.format(
-                                                            "%s possibly destroyed at %s",
-                                                            evt.identity, dataStore.lookupSystem(lastevt.systemId)));
-
-                                            clearIdentityRecord(evt);
-                                        }
+                                        possibleDestruction(app, lastevt, evt);
                                     } else {
-                                        // safe arrival since last jump
-                                        logger.info(String.format("%s arrived safely at %s", evt.identity, system));
-                                        clearIdentityRecord(evt);
-
-                                        BBEvent arrived = new BBEvent();
-                                        arrived.setEventName(BBEvent.ARRIVED);
-                                        arrived.setSubmitter(evt.identity);
-                                        arrived.setTimestamp(new Timestamp(evt.time.toEpochMilli()));
-                                        arrived.setApp(dataStore.lookupApp(app));
-                                        arrived.setStarSystem(evt.systemId);
-
-                                        dataStore.addEvent(arrived);
+                                        saveArrival(app, system, evt);
                                     }
                                 }
-
                             } catch (NameNotFoundError err) {
                                 // no fsdjump yet
                                 return;
@@ -203,28 +174,77 @@ public class IncidentScanner {
                             evt.systemId = dataStore.addSystem(system, starpos.get(0), starpos.get(1), starpos.get(2));
                         }
 
-                        // jump
-                        if (event.equals(EVENT_FSDJUMP)) {
-                            logger.info("{} jumped into {}", uploader, system);
-                        }
-
-                        // Scan
-                        if (event.equals(EVENNT_SCAN)) {
-
-                        }
-
-                        // docked
-                        if (event.equals(EVENT_DOCKED)) {
-                            // don't keep docked journal events, use the Capi events for docked
-                        } else {
-                            // only keep it if we found the system already
-                            if (evt.systemId > 0) {
-                                updateRecord(evt, event);
+                        if (evt.systemId > 0){
+                            // jump
+                            if (event.equals(EVENT_FSDJUMP)) {
+                                logger.info("jumped {} {}", system, uploader);
+                                recordSimpleEvent(appId, evt, BBEvent.JUMPEDIN);
                             }
+
+                            // Scan
+                            if (event.equals(EVENNT_SCAN)) {
+
+                            }
+
+                            // docked
+                            if (event.equals(EVENT_DOCKED)) {
+                                logger.info("docked {} {}", system, uploader);
+                                recordSimpleEvent(appId, evt, BBEvent.DOCKED);
+                            }
+
+                            // memoize scan/location/fsdjump for the system id information
+                            updateRecord(evt, event);
                         }
                     }
                 }
             }
+        }
+    }
+
+    private void recordSimpleEvent(long appId, JournalEvent evt, String docked) {
+        BBEvent bbe = new BBEvent();
+        bbe.setEventName(docked);
+        bbe.setSubmitter(evt.identity);
+        bbe.setTimestamp(new Timestamp(evt.time.toEpochMilli()));
+        bbe.setApp(appId);
+        bbe.setStarSystem(evt.systemId);
+        dataStore.addEvent(bbe);
+    }
+
+    private void saveArrival(String app, String system, CompanionEvent evt) {
+        // safe arrival since last jump
+        logger.info(String.format("%s arrived safely at %s", evt.identity, system));
+        clearIdentityRecord(evt);
+
+        BBEvent arrived = new BBEvent();
+        arrived.setEventName(BBEvent.ARRIVED);
+        arrived.setSubmitter(evt.identity);
+        arrived.setTimestamp(new Timestamp(evt.time.toEpochMilli()));
+        arrived.setApp(dataStore.lookupApp(app));
+        arrived.setStarSystem(evt.systemId);
+
+        dataStore.addEvent(arrived);
+    }
+
+    private void possibleDestruction(String app, JournalEvent lastevt, CompanionEvent evt) throws NameNotFoundError {
+        Duration since = Duration.between(lastevt.time, evt.time);
+        if (since.toMinutes() < DOCKED_GRACE_PERIOD.toMinutes()) {
+            // not quite enough time to restart the game and forget to launch edmc
+
+            BBEvent destroyed = new BBEvent();
+            destroyed.setEventName(BBEvent.DESTORYED);
+            destroyed.setSubmitter(evt.identity);
+            destroyed.setTimestamp(new Timestamp(evt.time.toEpochMilli()));
+            destroyed.setApp(dataStore.lookupApp(app));
+            destroyed.setStarSystem(evt.systemId);
+
+            dataStore.addEvent(destroyed);
+            logger.info(
+                    String.format(
+                            "%s possibly destroyed at %s",
+                            evt.identity, dataStore.lookupSystem(lastevt.systemId)));
+
+            clearIdentityRecord(evt);
         }
     }
 

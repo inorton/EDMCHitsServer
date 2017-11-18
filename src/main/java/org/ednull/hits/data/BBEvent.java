@@ -11,6 +11,12 @@ public class BBEvent {
     public static final String ARRIVED = "Arrived";
     public static final String INTERDICTED = "Interdicted";
 
+    // landed at a base,
+    public static final String DOCKED = "Docked";
+
+    // just entered a system
+    public static final String JUMPEDIN = "JumpedIn";
+
     /**
      * Unique identifier for this event log.
      * @return

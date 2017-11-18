@@ -11,7 +11,7 @@ public class RiskAdviser {
     public static String getAdvice(SystemReport location) {
         String advice = null;
 
-        double deathRate = ((float)location.destroyed)/location.arrived;
+        double deathRate = ((float)location.destroyed)/location.jumpedin;
 
         if (deathRate > NOTICE) {
             advice = String.format(

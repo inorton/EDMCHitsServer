@@ -25,8 +25,10 @@ function load_system_graph(canvasId, systemName, hours) {
     var can = jQuery(canvasId);
     var ctx = can.get(0).getContext("2d");
 
-    var arrival_data = [];
+    var jumped_data = [];
     var destroyed_data = [];
+    var docked_data = [];
+
     var labels = [];
     labels.push("now");
     for (var i = 1; i < hours; i++) {
@@ -45,21 +47,31 @@ function load_system_graph(canvasId, systemName, hours) {
                 labels: labels,
                 datasets: [
                     {
-                        label: "Arrivals",
-                        backgroundColor: window.chartColors.green,
-                        borderColor: window.chartColors.green,
-                        data: arrival_data,
-                        lineTension: 0.1,
-                        fill: true
-                    },
-                    {
                         label: "Destroyed",
                         backgroundColor: window.chartColors.red,
                         borderColor: window.chartColors.red,
                         data: destroyed_data,
                         lineTension: 0.1,
+                        pointRadius: 2,
                         fill: true
+                    },
+                    {
+                        label: "Docked",
+                        backgroundColor: window.chartColors.yellow,
+                        borderColor: window.chartColors.yellow,
+                        data: docked_data,
+                        lineTension: 0.9,
+                        fill: false
+                    },
+                    {
+                        label: "Jumped In",
+                        backgroundColor: window.chartColors.green,
+                        borderColor: window.chartColors.green,
+                        data: jumped_data,
+                        lineTension: 0.9,
+                        fill: false
                     }
+
                 ]
             },
             options: {
@@ -89,11 +101,14 @@ function load_system_graph(canvasId, systemName, hours) {
         graphs.push(new Chart(ctx, config));
     };
 
-    var handle_arrived = function (arrived_resp) {
-        arrival_data = arrived_resp.values;
-        get_system_data(systemName, "destroyed", hours, handle_destroyed);
-    };
-
-    get_system_data(systemName, "arrived", hours, handle_arrived);
+    get_system_data(systemName, "docked", hours, function (docked_resp) {
+        docked_data = docked_resp.values;
+        // got the docked data, now ask about jumps
+        get_system_data(systemName, "jumpedin", hours, function (jumped_resp) {
+            jumped_data = jumped_resp.values;
+            // got the jump counts, request destroyed counts
+            get_system_data(systemName, "destroyed", hours, handle_destroyed);
+        })
+    });
 
 }

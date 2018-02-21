@@ -177,7 +177,6 @@ public class IncidentScanner {
                         if (evt.systemId > 0){
                             // jump
                             if (event.equals(EVENT_FSDJUMP)) {
-                                logger.info("jumped {} {}", system, uploader);
                                 recordSimpleEvent(appId, evt, BBEvent.JUMPEDIN);
                             }
 
@@ -188,7 +187,6 @@ public class IncidentScanner {
 
                             // docked
                             if (event.equals(EVENT_DOCKED)) {
-                                logger.info("docked {} {}", system, uploader);
                                 recordSimpleEvent(appId, evt, BBEvent.DOCKED);
                             }
 

@@ -42,12 +42,9 @@ RUN set -o errexit -o nounset \
 USER gradle
 WORKDIR /home/gradle
 
-RUN set -o errexit -o nounset \
-	&& echo "Testing Gradle installation" \
-	&& gradle --version
-
 RUN whoami ; pwd ; gradle --version
 ADD build.gradle .
 COPY src src
 RUN find src
-RUN gradle build -q && find . -type f -name 'hits-*.jar'
+RUN gradle build -q 
+RUN find . -type f -name 'hits-*.jar'
